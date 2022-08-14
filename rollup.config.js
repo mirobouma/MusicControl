@@ -5,7 +5,6 @@ import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
 import { defineConfig } from 'rollup';
 import importAssets from 'rollup-plugin-import-assets';
-
 import { name } from "./plugin.json";
 
 export default defineConfig({
@@ -29,7 +28,7 @@ export default defineConfig({
     file: 'dist/index.js',
     globals: {
       react: 'SP_REACT',
-      'react-dom': 'SP_REACTDOM',
+      'react-dom': 'SP_REACTDOM'
     },
     format: 'iife',
     exports: 'default',
