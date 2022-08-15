@@ -1,7 +1,7 @@
 {
   "name": "MusicControl",
   "author": "Miro Bouma",
-  "flags": ["debug"],
+  "flags": [],
   "publish": {
     "tags": ["music"],
     "description": "Updated spotify music control plugin.",
