@@ -52,12 +52,38 @@ export function sp_seek(amount: number): Promise<any> {
     return server!.callPluginMethod("sp_seek", {amount});
 }
 
+export function sp_setPosition(position: number, trackid: string): Promise<any> {
+    return server!.callPluginMethod("sp_set_position",  {
+        position: position,
+        trackid: trackid,
+      });
+}
+
+export function sp_track_status(): Promise<any> {
+    return server!.callPluginMethod("sp_track_status", {});
+}
+
 export function sp_previous(): Promise<any> {
     return server!.callPluginMethod("sp_previous", {});
 }
 
-export function getTrackProgress(): Promise<any> {
-    return server!.callPluginMethod("get_track_progress", {});
+export function sp_track_progress(): Promise<any> {
+    return server!.callPluginMethod("sp_track_progress", {});
+}
+
+export function sp_list_media_players(): Promise<any> {
+    return server!.callPluginMethod("sp_list_media_players", {});
+}
+
+export function sp_get_media_player(): Promise<any> {
+    return server!.callPluginMethod("sp_get_media_player", {});
+}
+
+export function sp_set_media_player(player: string): Promise<any> {
+    if(player == "")
+    return server!.callPluginMethod("sp_set_media_player", {player: "org.mpris.MediaPlayer2.spotify"});
+   
+    return server!.callPluginMethod("sp_set_media_player", {player});
 }
 
 export function sp_start(): Promise<any> {
