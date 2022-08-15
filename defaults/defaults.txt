@@ -3,11 +3,9 @@ Those files will be pulled into the zip during the build process and included wi
 Files can also be put in here such as a config, just keep in mind that they this directory cannot be utilized to put files in arbitrary locations, just within the extracted root folder of the plugin, ex: CssLoader has "defaults/themes/..." setup in it's repo, but when packaged to go to the store, the file structure will be:
 
 - LICENSE
-- README
+- README.md
 - dist
   - index.js
 - main.py
 - package.json
 - plugin.json
-- themes
-  - exampletheme.css

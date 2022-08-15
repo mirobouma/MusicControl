@@ -1,6 +1,6 @@
 {
   "name": "music-control",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Music control plugin for spotify",
   "scripts": {
     "build": "shx rm -rf dist && rollup -c",

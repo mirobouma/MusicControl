@@ -67,6 +67,10 @@ export function sp_previous(): Promise<any> {
     return server!.callPluginMethod("sp_previous", {});
 }
 
+export function sp_identity(orgPath: string): Promise<any> {
+    return server!.callPluginMethod("sp_identity", {orgPath});
+}
+
 export function sp_track_progress(): Promise<any> {
     return server!.callPluginMethod("sp_track_progress", {});
 }

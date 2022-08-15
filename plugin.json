@@ -5,6 +5,6 @@
   "publish": {
     "tags": ["music"],
     "description": "Updated spotify music control plugin.",
-    "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
+    "image": "https://raw.githubusercontent.com/mirobouma/MusicControl/main/assets/screenshot.jpg"
   }
 }

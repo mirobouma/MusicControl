@@ -5,11 +5,18 @@ import sys
 SP_DEST = "org.mpris.MediaPlayer2.spotify"
 
 MP_PATH = "/org/mpris/MediaPlayer2"
-MP_MEMB = "org.mpris.MediaPlayer2.Player"
+MP_MEMB_PLAYER = "org.mpris.MediaPlayer2.Player"
+MP_MEMB = "org.mpris.MediaPlayer2"
 PROP_PATH = "org.freedesktop.DBus.Properties.Get"
 
 class Plugin:
     player = SP_DEST
+
+    def _sp_player_dbus(self, command, parameters):
+        env = os.environ.copy()
+        env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
+        return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {MP_MEMB_PLAYER}.{command} \
+            {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
 
     def _sp_dbus(self, command, parameters):
         env = os.environ.copy()
@@ -18,46 +25,54 @@ class Plugin:
             {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
 
     async def _sp_open(self, uri):
-        return self._sp_dbus(self, "OpenUri", f"string:{uri}")
+        return self._sp_player_dbus(self, "OpenUri", f"string:{uri}")
 
     async def sp_play(self):
-        return self._sp_dbus(self, "PlayPause", "")
+        return self._sp_player_dbus(self, "PlayPause", "")
 
     async def sp_pause(self):
-        return self._sp_dbus(self, "Pause", "")
+        return self._sp_player_dbus(self, "Pause", "")
     
     async def sp_next(self):
-        return self._sp_dbus(self, "Next", "")
+        return self._sp_player_dbus(self, "Next", "")
 
     async def sp_previous(self):
-        return self._sp_dbus(self, "Previous", "")
+        return self._sp_player_dbus(self, "Previous", "")
 
     async def sp_seek(self, amount):
-        return self._sp_dbus(self, "Seek", f"int64:\"{amount}\"")
+        return self._sp_player_dbus(self, "Seek", f"int64:\"{amount}\"")
 
     async def sp_set_position(self, position : int, trackid : str):
-        return self._sp_dbus(self, "SetPosition", f"objpath:\"{trackid}\" int64:\"{position}\"")
+        return self._sp_player_dbus(self, "SetPosition", f"objpath:\"{trackid}\" int64:\"{position}\"")
 
     async def sp_track_status(self):
         env = os.environ.copy()
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         result =  subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_PATH} \
-            string:\"{MP_MEMB}\" string:'PlaybackStatus' \
+            string:\"{MP_MEMB_PLAYER}\" string:'PlaybackStatus' \
             | tail -1 \
             | cut -d \"\\\"\" -f2" \
             ,stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
-        print(result)
-        sys.stdout.flush()
         return result
 
     async def sp_track_progress(self):
         env = os.environ.copy()
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         result = subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_PATH} \
-            string:\"{MP_MEMB}\" string:'Position' \
+            string:\"{MP_MEMB_PLAYER}\" string:'Position' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev" \
             , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+        return result
+
+    async def sp_identity(self, orgPath: str):
+        env = os.environ.copy()
+        env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
+        result = subprocess.Popen(f"dbus-send --print-reply --dest={orgPath} {MP_PATH} {PROP_PATH} \
+            string:\"{MP_MEMB}\" string:'Identity' \
+            | tail -1 \
+            | rev | cut -d' ' -f 1 | rev" \
+            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0].replace("\"", "")
         return result
 
     async def get_meta_data(self):
@@ -65,7 +80,7 @@ class Plugin:
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         try:
             result = subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_PATH} \
-                string:\"{MP_MEMB}\" string:'Metadata' \
+                string:\"{MP_MEMB_PLAYER}\" string:'Metadata' \
                 | grep -Ev \"^method\"                           `# Ignore the first line.`   \
                 | grep -Eo '(\"(.*)\")|(\\b[0-9][a-zA-Z0-9.]*\\b)' `# Filter interesting fiels.`\
                 | sed -E '2~2 a|'                              `# Mark odd fields.`         \
@@ -95,16 +110,13 @@ class Plugin:
         for service in services:
             if service.find('org.mpris.MediaPlayer2') != -1:
                 mediaPlayers.append(service)
-        
+
         servicesString = ""
         mediaPlayerCount = len(mediaPlayers)
         for i in range(mediaPlayerCount):
-            servicesString = servicesString.join(mediaPlayers[i])
+            servicesString += mediaPlayers[i]
             if i < mediaPlayerCount - 1:
-                servicesString = servicesString.join(',')
-        
-        print(servicesString)
-        sys.stdout.flush()
+                servicesString += ','
         return servicesString
     
     async def sp_set_media_player(self, player : str):

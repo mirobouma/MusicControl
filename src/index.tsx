@@ -34,6 +34,7 @@ var currentTrackLength: number = 1;
 var currentTrackStatus: string = "Paused";
 var currentServiceProvider: string = ""
 var providers: string[] = [];
+var providersToIdentity = {}
 
 var findDBUSServices = function() {};
 var updateCurrentTrack = function(){};
@@ -162,7 +163,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
   };
 
   findDBUSServices = function() {
-    console.log("Finding dbus services");
+    console.debug("Finding dbus services");
     python.resolve(python.sp_list_media_players(),  (mediaPlayers: string) => {
       if (mediaPlayers == "Unavailable" || mediaPlayers == null || typeof mediaPlayers == undefined || mediaPlayers == "")
       {
@@ -178,7 +179,6 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
         return;
       }
 
-      console.log("Services: " + mediaPlayers);
       providers = mediaPlayers.split(',');
 
       if (providers.length > 0 && currentServiceProvider == "")
@@ -186,7 +186,15 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
         setCurrentServiceProvider(providers[0]);
         python.sp_set_media_player(currentServiceProvider);
       }
-       
+
+      providers.forEach((provider: string) => {
+        if (provider in providersToIdentity)
+          return;
+
+        python.resolve(python.sp_identity(provider),  (providerName: string) => {
+          providersToIdentity[provider] = providerName;
+        });
+      });
       
       updateCurrentTrack();
     });
@@ -248,7 +256,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
     firstTime = false;
     findDBUSServices();
 
-    console.log("Setting up periodic hook");
+    console.debug("Setting up periodic hook");
     periodicHook = setInterval(function() {
       findDBUSServices();
     }, 1000);
@@ -292,7 +300,9 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
           }}></div>
         </div>
       </div>
-      <SliderField value={currentTrackProgressGlobal / currentTrackLengthGlobal} min={0} max={1} step={0.05}
+      {
+       currentTrackLengthGlobal > 1 ?
+      <SliderField value={currentTrackProgressGlobal / currentTrackLengthGlobal} min={0} max={1} step={0.05} 
         onChange={(value: number) => {
           const roundedProgress = Math.round(value * currentTrackLength);
           python.execute(python.sp_setPosition(roundedProgress, currentTrackId));
@@ -305,8 +315,8 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
           seekTimeout = setTimeout(() => {
             isSeeking = false;
           }, 1500);
-
-      }}></SliderField>
+      }}></SliderField> : <div></div>
+      }
       <Focusable style={{marginTop: '5px', display: 'flex'}} flow-children='horizontal'>
         <DialogButton 
           style={{
@@ -357,7 +367,9 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
                       return <MenuItem onSelected={() => {
                         setCurrentServiceProvider(provider);
                         python.sp_set_media_player(provider);
-                      }}>{provider.replace("org.mpris.MediaPlayer2.", "")}</MenuItem>
+                      }}>
+                        {provider in providersToIdentity ? providersToIdentity[provider] : 
+                        provider.replace("org.mpris.MediaPlayer2.", "")}</MenuItem>
                     })
                   }
                 </Menu>,
@@ -365,7 +377,10 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
               )
             }
           >
-          {currentServiceProvider == "" ? "No Media Player Found" : currentServiceProviderGlobal.replace("org.mpris.MediaPlayer2.", "")}
+          {currentServiceProvider == "" ? "No Media Player Found" : 
+            ((currentServiceProviderGlobal in providersToIdentity) ? 
+            providersToIdentity[currentServiceProviderGlobal] 
+            : currentServiceProviderGlobal.replace("org.mpris.MediaPlayer2.", ""))}
         </ButtonItem>
       </div>
     </PanelSection>
