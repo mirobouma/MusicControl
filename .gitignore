@@ -41,4 +41,4 @@ yalc.lock
 
 .vscode/settings.json
 package-lock.json
-pnpm-lock.json
+pnpm-lock.yaml

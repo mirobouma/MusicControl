@@ -52,12 +52,13 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
 
   const [currentSongGlobal, setCurrentSong_internal] = useState<string>(currentSong);
   const setCurrentSong = (value: string) => {
-    if (value == "" || typeof value == undefined)
+    if (value == "" || value == null || typeof(value) != 'string')
     {
       currentSong = "Not Playing";
-      setCurrentSong_internal(value);
+      setCurrentSong_internal(currentSong);
       return;
     }
+    
     currentSong = value;
     setCurrentSong_internal(value);
   };
@@ -70,10 +71,11 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
 
   const [currentArtistGlobal, setCurrentArtist_internal] = useState<string>(currentArtist);
   const setCurrentArtist = (value: string) => {
-    if (value == "" || typeof value == undefined)
+    if (value == "" || value == null || typeof(value) != 'string')
     {
       currentArtist = "Unknown Artist";
-      setCurrentArtist_internal("Unknown Artist");
+      setCurrentArtist_internal(currentArtist);
+      return;
     }
 
     currentArtist = value;
@@ -83,7 +85,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
   const [currentArtUrlGlobal, setCurrentArtUrl_internal] = useState<string>(currentArtUrl);
   const setCurrentArtUrl = (value: string) => {
     // no support for file links yet :( sorry
-    if (value == "" || typeof value == undefined || (typeof(value) !== 'undefined' && value.startsWith('file:///')))
+    if (value == "" ||  value == null ||  typeof(value) != 'string' || (typeof(value) !== 'undefined' && value.startsWith('file:///')))
     {
       currentArtUrl = default_music;
       setCurrentArtUrl_internal(default_music);
@@ -97,7 +99,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
   const [currentTrackStatusGlobal, setCurrentTrackStatus_internal] = useState<string>(currentTrackStatus);
   const setCurrentTrackStatus = (value: string) => {
     // no support for file links yet :( sorry
-    if (value == "" || typeof value == undefined || typeof(value) == 'undefined')
+    if (value == "" ||  value == null || typeof(value) != 'string')
     {
       currentTrackStatus = "Paused";
       setCurrentTrackStatus_internal("Paused");
@@ -111,7 +113,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
   const [currentServiceProviderGlobal, setCurrentServiceProvider_internal] = useState<string>(currentServiceProvider);
   const setCurrentServiceProvider = (value: string) => {
     // no support for file links yet :( sorry
-    if (value == "" || typeof value == undefined || typeof(value) == 'undefined')
+    if (value == "" ||  value == null || typeof(value) != 'string')
     {
       currentServiceProvider = "";
       setCurrentServiceProvider_internal("");
@@ -140,7 +142,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
 
   const [currentTrackIdGlobal, setCurrentTrackId_internal] = useState<string>(currentTrackId);
   const setCurrentTrackId = (value: string) => {
-    if (value == "" || typeof value == undefined)
+    if (value == "" ||  value == null || typeof(value) != 'string')
     {
       currentTrackId = "/not/used";
       setCurrentTrackId_internal(value);
@@ -165,7 +167,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
   findDBUSServices = function() {
     console.debug("Finding dbus services");
     python.resolve(python.sp_list_media_players(),  (mediaPlayers: string) => {
-      if (mediaPlayers == "Unavailable" || mediaPlayers == null || typeof mediaPlayers == undefined || mediaPlayers == "")
+      if (mediaPlayers == "Unavailable" || mediaPlayers == null || typeof(mediaPlayers) != 'string' || mediaPlayers == "")
       {
         setServiceIsAvailable(false);
         setCurrentSong("Not Playing");
@@ -202,7 +204,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
 
   updateCurrentTrack = function () {
     python.resolve(python.getMetaData(),  (metaData: string) => {
-      if (metaData == "Unavailable" || metaData == null || typeof metaData == undefined || metaData == "")
+      if (metaData == "Unavailable" || metaData == null  || typeof(metaData) != 'string' || metaData == "")
       {
         setServiceIsAvailable(false);
         setCurrentSong("Not Playing");
