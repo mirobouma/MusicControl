@@ -401,7 +401,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
       {
       serviceAvailableGlobal ?
       <div>
-        <div className={staticClasses.PanelSectionTitle}>Volume</div>
+        <div className={staticClasses.PanelSectionTitle}>Playback Volume</div>
         <div>
           <SliderField value={Math.round(currentVolumeGlobal * 100)} min={0} max={100} step={1} 
             onChange={(value: number) => {
