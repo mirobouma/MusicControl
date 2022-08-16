@@ -38,9 +38,11 @@ var currentServiceProvider: string = ""
 var providers: string[] = [];
 var providersToIdentity = {}
 var currentVolume: number = 1.0;
+var canModifyVolume: boolean = false;
 
 var findDBUSServices = function() {};
 var updateCurrentTrack = function(){};
+var setDefaultValues = function(){};
 
 const titleStyles: CSSProperties = {
   display: 'flex',
@@ -52,6 +54,21 @@ const titleStyles: CSSProperties = {
 
 const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
   python.setServer(serverAPI);
+
+  setDefaultValues = function () {
+    setServiceIsAvailable(false);
+    setCurrentSong("Not Playing");
+    setCurrentArtUrl(default_music);
+    setCurrentArtist("Unknown Artist");
+    setCurrentTrackLength(1);
+    setCurrentTrackId("/not/used");
+    setCurrentTrackProgress(0);
+    setCurrentTrackStatus("Paused");
+    setCurrentServiceProvider("");
+    setCurrentVolume(1.0);
+    setCanModifyVolume(false);
+    providers = []
+  }
 
   const [currentSongGlobal, setCurrentSong_internal] = useState<string>(currentSong);
   const setCurrentSong = (value: string) => {
@@ -148,15 +165,23 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
     if (isSettingVolume)
       return;
 
-    if (isNaN(value))
+    if ((typeof value === 'number' && isFinite(value)) || (typeof value === 'string' && value !== "" && !isNaN(parseFloat(value))))
     {
-      currentVolume = 1.0;
+      currentVolume = value;
       setCurrentVolume_internal(value);
+      setCanModifyVolume(true);
       return;
     }
-     
-    currentVolume = value;
+   
+    currentVolume = 1.0;
     setCurrentVolume_internal(value);
+    setCanModifyVolume(false);
+  };
+
+  const [canModifyVolumeGlobal, setCanModifyVolume_internal] = useState<boolean>(canModifyVolume);
+  const setCanModifyVolume = (value: boolean) => {
+    canModifyVolume = value;
+    setCanModifyVolume_internal(value);
   };
 
   const [currentTrackIdGlobal, setCurrentTrackId_internal] = useState<string>(currentTrackId);
@@ -188,17 +213,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
     python.resolve(python.sp_list_media_players(),  (mediaPlayers: string) => {
       if (mediaPlayers == "Unavailable" || mediaPlayers == null || typeof(mediaPlayers) != 'string' || mediaPlayers == "")
       {
-        setServiceIsAvailable(false);
-        setCurrentSong("Not Playing");
-        setCurrentArtUrl(default_music);
-        setCurrentArtist("Unknown Artist");
-        setCurrentTrackLength(1);
-        setCurrentTrackId("/not/used");
-        setCurrentTrackProgress(0);
-        setCurrentTrackStatus("Paused");
-        setCurrentServiceProvider("");
-        setCurrentVolume(1.0);
-        providers = []
+        setDefaultValues();
         return;
       }
 
@@ -227,16 +242,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
     python.resolve(python.getMetaData(),  (metaData: string) => {
       if (metaData == "Unavailable" || metaData == null  || typeof(metaData) != 'string' || metaData == "")
       {
-        setServiceIsAvailable(false);
-        setCurrentSong("Not Playing");
-        setCurrentArtUrl(default_music);
-        setCurrentArtist("Unknown Artist");
-        setCurrentTrackLength(1);
-        setCurrentTrackId("/not/used");
-        setCurrentTrackProgress(0);
-        setCurrentTrackStatus("Paused");
-        setCurrentVolume(1.0);
-
+        setDefaultValues();
         findDBUSServices();
         return;
       }
@@ -399,7 +405,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
         marginBottom: '5px',
       }}></div>
       {
-      serviceAvailableGlobal ?
+      serviceAvailableGlobal && canModifyVolumeGlobal ?
       <div>
         <div className={staticClasses.PanelSectionTitle}>Playback Volume</div>
         <div>
