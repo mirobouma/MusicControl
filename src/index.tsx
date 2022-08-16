@@ -37,7 +37,7 @@ var currentTrackStatus: string = "Paused";
 var currentServiceProvider: string = ""
 var providers: string[] = [];
 var providersToIdentity = {}
-var currentVolume: number = 0;
+var currentVolume: number = 1.0;
 
 var findDBUSServices = function() {};
 var updateCurrentTrack = function(){};
@@ -150,7 +150,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
 
     if (isNaN(value))
     {
-      currentVolume = 0;
+      currentVolume = 1.0;
       setCurrentVolume_internal(value);
       return;
     }
@@ -197,6 +197,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
         setCurrentTrackProgress(0);
         setCurrentTrackStatus("Paused");
         setCurrentServiceProvider("");
+        setCurrentVolume(1.0);
         providers = []
         return;
       }
@@ -234,6 +235,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
         setCurrentTrackId("/not/used");
         setCurrentTrackProgress(0);
         setCurrentTrackStatus("Paused");
+        setCurrentVolume(1.0);
 
         findDBUSServices();
         return;
@@ -346,7 +348,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
           }, 1500);
       }}></SliderField> : <div></div>
       }
-      <Focusable style={{marginTop: '5px', display: 'flex'}} flow-children='horizontal'>
+      <Focusable style={{marginTop: '10px', marginBottom: '10px', display: 'flex'}} flow-children='horizontal'>
         <DialogButton 
           style={{
             marginRight: '5px',
@@ -385,13 +387,25 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
           <FaFastForward style={{ marginTop: '-4px', display: 'block' }} />
         </DialogButton>
       </Focusable>
+      <div style={{
+        content: "",
+        bottom: '-0.5px',
+        left: '0',
+        right: '0',
+        height: '1px',
+        background: '#23262e',
+        width: '100%',
+        marginTop: '5px',
+        marginBottom: '5px',
+      }}></div>
       {
       serviceAvailableGlobal ?
       <div>
         <div className={staticClasses.PanelSectionTitle}>Volume</div>
-        <PanelSectionRow>
-          <SliderField value={currentVolumeGlobal} min={0} max={1.0} step={0.05} 
+        <div>
+          <SliderField value={Math.round(currentVolumeGlobal * 100)} min={0} max={100} step={1} 
             onChange={(value: number) => {
+              value /= 100.0;
               python.execute(python.sp_set_volume(value));
               
               isSettingVolume = false;
@@ -404,7 +418,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
               }, 1500);
           }}>
           </SliderField>
-        </PanelSectionRow>
+        </div>
       </div>
       : <div></div>
       }

@@ -8,7 +8,7 @@ MP_PATH = "/org/mpris/MediaPlayer2"
 MP_MEMB_PLAYER = "org.mpris.MediaPlayer2.Player"
 MP_MEMB = "org.mpris.MediaPlayer2"
 PROP_PATH = "org.freedesktop.DBus.Properties.Get"
-
+PROP_SET_PATH = "org.freedesktop.DBus.Properties.Set"
 class Plugin:
     player = SP_DEST
 
@@ -23,6 +23,12 @@ class Plugin:
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {MP_MEMB}.{command} \
             {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+
+    def _sp_dbus_set(self, command, parameters):
+        env = os.environ.copy()
+        env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
+        return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_SET_PATH} string:\"{MP_MEMB_PLAYER}\" \
+            string:\"{command}\" {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
 
     async def _sp_open(self, uri):
         return self._sp_player_dbus(self, "OpenUri", f"string:{uri}")
@@ -46,7 +52,7 @@ class Plugin:
         return self._sp_player_dbus(self, "SetPosition", f"objpath:\"{trackid}\" int64:\"{position}\"")
 
     async def sp_set_volume(self, volume):
-        return self._sp_player_dbus(self, "Volume", f"variant:double:{volume}")
+        return self._sp_dbus_set(self, "Volume", f"variant:double:{volume}")
 
     async def sp_track_status(self):
         env = os.environ.copy()
@@ -54,7 +60,7 @@ class Plugin:
         result =  subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_PATH} \
             string:\"{MP_MEMB_PLAYER}\" string:'PlaybackStatus' \
             | tail -1 \
-            | cut -d \"\\\"\" -f2" \
+            | cut -d \"\\\"\" -f2 | tr -d \"\n\"" \
             ,stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
         return result
 
@@ -64,7 +70,7 @@ class Plugin:
         result = subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_PATH} \
             string:\"{MP_MEMB_PLAYER}\" string:'Position' \
             | tail -1 \
-            | rev | cut -d' ' -f 1 | rev" \
+            | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
             , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
         return result
 
@@ -74,7 +80,7 @@ class Plugin:
         result = subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_PATH} \
             string:\"{MP_MEMB_PLAYER}\" string:'Volume' \
             | tail -1 \
-            | rev | cut -d' ' -f 1 | rev" \
+            | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
             , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
         return result
 
