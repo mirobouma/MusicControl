@@ -45,6 +45,9 @@ class Plugin:
     async def sp_set_position(self, position : int, trackid : str):
         return self._sp_player_dbus(self, "SetPosition", f"objpath:\"{trackid}\" int64:\"{position}\"")
 
+    async def sp_set_volume(self, volume):
+        return self._sp_player_dbus(self, "Volume", f"variant:double:{volume}")
+
     async def sp_track_status(self):
         env = os.environ.copy()
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
@@ -60,6 +63,16 @@ class Plugin:
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         result = subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_PATH} \
             string:\"{MP_MEMB_PLAYER}\" string:'Position' \
+            | tail -1 \
+            | rev | cut -d' ' -f 1 | rev" \
+            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+        return result
+
+    async def sp_get_volume(self):
+        env = os.environ.copy()
+        env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
+        result = subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_PATH} \
+            string:\"{MP_MEMB_PLAYER}\" string:'Volume' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev" \
             , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]

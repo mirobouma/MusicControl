@@ -22,8 +22,10 @@ import default_music from "../assets/default_music.png";
 var firstTime: boolean = true;
 var periodicHook: NodeJS.Timer | null = null;
 var seekTimeout: NodeJS.Timer | null = null;
+var volumeTimeout: NodeJS.Timer | null = null;
 
 var isSeeking: boolean = false;
+var isSettingVolume: boolean = false;
 var serviceIsAvailable: boolean = false;
 var currentSong: string = "Not Playing";
 var currentArtist: string = "Unknown Artist";
@@ -35,6 +37,7 @@ var currentTrackStatus: string = "Paused";
 var currentServiceProvider: string = ""
 var providers: string[] = [];
 var providersToIdentity = {}
+var currentVolume: number = 0;
 
 var findDBUSServices = function() {};
 var updateCurrentTrack = function(){};
@@ -106,7 +109,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
       return;
     }
     
-    currentTrackStatus = value.replace(/(\r\n|\n|\r)/gm, "");;
+    currentTrackStatus = value.replace(/(\r\n|\n|\r)/gm, "");
     setCurrentTrackStatus_internal(currentTrackStatus);
   };
 
@@ -138,6 +141,22 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
      
     currentTrackProgress = value;
     setCurrentTrackProgress_internal(value);
+  };
+
+  const [currentVolumeGlobal, setCurrentVolume_internal] = useState<number>(currentVolume);
+  const setCurrentVolume = (value: number) => {
+    if (isSettingVolume)
+      return;
+
+    if (isNaN(value))
+    {
+      currentVolume = 0;
+      setCurrentVolume_internal(value);
+      return;
+    }
+     
+    currentVolume = value;
+    setCurrentVolume_internal(value);
   };
 
   const [currentTrackIdGlobal, setCurrentTrackId_internal] = useState<string>(currentTrackId);
@@ -239,7 +258,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
 
       python.resolve(python.sp_track_progress(), setCurrentTrackProgress);
       python.resolve(python.sp_track_status(), setCurrentTrackStatus);
-
+      python.resolve(python.sp_get_volume(), setCurrentVolume);
   });
   };
 
@@ -254,6 +273,13 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
       clearInterval(seekTimeout);
       seekTimeout = null;
     }
+
+    if (volumeTimeout != null) {
+      clearInterval(volumeTimeout);
+      volumeTimeout = null;
+    }
+
+    isSettingVolume = false;
     isSeeking = false;
 
     firstTime = false;
@@ -304,7 +330,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
         </div>
       </div>
       {
-       currentTrackLengthGlobal > 1 ?
+      currentTrackLengthGlobal > 1 ?
       <SliderField value={currentTrackProgressGlobal / currentTrackLengthGlobal} min={0} max={1} step={0.05} 
         onChange={(value: number) => {
           const roundedProgress = Math.round(value * currentTrackLength);
@@ -359,7 +385,30 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
           <FaFastForward style={{ marginTop: '-4px', display: 'block' }} />
         </DialogButton>
       </Focusable>
-      <div style={{marginTop: 'auto'}}>
+      {
+      serviceAvailableGlobal ?
+      <div>
+        <div className={staticClasses.PanelSectionTitle}>Volume</div>
+        <PanelSectionRow>
+          <SliderField value={currentVolumeGlobal} min={0} max={1.0} step={0.05} 
+            onChange={(value: number) => {
+              python.execute(python.sp_set_volume(value));
+              
+              isSettingVolume = false;
+              setCurrentVolume(value);
+              isSettingVolume = true;
+
+              clearTimeout(volumeTimeout!);
+              volumeTimeout = setTimeout(() => {
+                isSettingVolume = false;
+              }, 1500);
+          }}>
+          </SliderField>
+        </PanelSectionRow>
+      </div>
+      : <div></div>
+      }
+      <PanelSectionRow>
         <ButtonItem
             layout="below"
             onClick={(e) =>
@@ -385,7 +434,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
             providersToIdentity[currentServiceProviderGlobal] 
             : currentServiceProviderGlobal.replace("org.mpris.MediaPlayer2.", ""))}
         </ButtonItem>
-      </div>
+      </PanelSectionRow>
     </PanelSection>
   );
 };
@@ -422,6 +471,8 @@ export default definePlugin((serverApi: ServerAPI) => {
       periodicHook = null;
       clearTimeout(seekTimeout!);
       seekTimeout = null;
+      clearTimeout(volumeTimeout!);
+      volumeTimeout = null;
     },
   };
 });

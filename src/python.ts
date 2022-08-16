@@ -75,6 +75,14 @@ export function sp_track_progress(): Promise<any> {
     return server!.callPluginMethod("sp_track_progress", {});
 }
 
+export function sp_get_volume(): Promise<any> {
+    return server!.callPluginMethod("sp_get_volume", {});
+}
+
+export function sp_set_volume(volume: number): Promise<any> {
+    return server!.callPluginMethod("sp_set_volume", {volume});
+}
+
 export function sp_list_media_players(): Promise<any> {
     return server!.callPluginMethod("sp_list_media_players", {});
 }
