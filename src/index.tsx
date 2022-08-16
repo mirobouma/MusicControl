@@ -178,6 +178,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
         setCurrentTrackProgress(0);
         setCurrentTrackStatus("Paused");
         setCurrentServiceProvider("");
+        providers = []
         return;
       }
 
