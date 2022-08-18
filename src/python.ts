@@ -79,12 +79,20 @@ export function sp_get_volume(): Promise<any> {
     return server!.callPluginMethod("sp_get_volume", {});
 }
 
+export function sp_can_seek(): Promise<any> {
+    return server!.callPluginMethod("sp_can_seek", {});
+}
+
 export function sp_set_volume(volume: number): Promise<any> {
     return server!.callPluginMethod("sp_set_volume", {volume});
 }
 
 export function sp_list_media_players(): Promise<any> {
     return server!.callPluginMethod("sp_list_media_players", {});
+}
+
+export function sp_test_volume_control(): Promise<any> {
+    return server!.callPluginMethod("sp_test_volume_control", {});
 }
 
 export function sp_get_media_player(): Promise<any> {

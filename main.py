@@ -9,6 +9,7 @@ MP_MEMB_PLAYER = "org.mpris.MediaPlayer2.Player"
 MP_MEMB = "org.mpris.MediaPlayer2"
 PROP_PATH = "org.freedesktop.DBus.Properties.Get"
 PROP_SET_PATH = "org.freedesktop.DBus.Properties.Set"
+
 class Plugin:
     player = SP_DEST
 
@@ -28,7 +29,7 @@ class Plugin:
         env = os.environ.copy()
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_SET_PATH} string:\"{MP_MEMB_PLAYER}\" \
-            string:\"{command}\" {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            string:\"{command}\" {parameters} ", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
 
     async def _sp_open(self, uri):
         return self._sp_player_dbus(self, "OpenUri", f"string:{uri}")
@@ -83,6 +84,34 @@ class Plugin:
             | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
             , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
         return result
+
+    async def sp_can_seek(self):
+        env = os.environ.copy()
+        env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
+        result = subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_PATH} \
+            string:\"{MP_MEMB_PLAYER}\" string:'CanSeek' \
+            | tail -1 \
+            | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
+            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+        return result
+
+    async def sp_test_volume_control(self):
+        oldVolume = await self.sp_get_volume(self)
+
+        print("Volume test: " + oldVolume)
+        sys.stdout.flush()
+
+        if oldVolume == "":
+            return "false"
+        if oldVolume != "0":
+            return "true"
+
+        await self.sp_set_volume(self, 0.01)
+        newVolume = await self.sp_get_volume(self)
+        if oldVolume != newVolume:
+            await self.sp_set_volume(self, oldVolume)
+            return "true"
+        return "false"
 
     async def sp_identity(self, orgPath: str):
         env = os.environ.copy()

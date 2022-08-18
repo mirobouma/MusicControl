@@ -14,7 +14,7 @@ import {
 } from "decky-frontend-lib";
 
 import { CSSProperties, VFC, useState } from "react";
-import { FaMusic, FaCog, FaPlay, FaPause, FaFastForward, FaFastBackward } from "react-icons/fa";
+import { FaMusic, FaPlay, FaPause, FaFastForward, FaFastBackward } from "react-icons/fa";
 import * as python from "./python";
 
 import default_music from "../assets/default_music.png";
@@ -24,6 +24,7 @@ var periodicHook: NodeJS.Timer | null = null;
 var seekTimeout: NodeJS.Timer | null = null;
 var volumeTimeout: NodeJS.Timer | null = null;
 
+var changedProvider : boolean = false;
 var isSeeking: boolean = false;
 var isSettingVolume: boolean = false;
 var serviceIsAvailable: boolean = false;
@@ -39,6 +40,7 @@ var providers: string[] = [];
 var providersToIdentity = {}
 var currentVolume: number = 1.0;
 var canModifyVolume: boolean = false;
+var canSeek: boolean = false;
 
 var findDBUSServices = function() {};
 var updateCurrentTrack = function(){};
@@ -67,6 +69,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
     setCurrentServiceProvider("");
     setCurrentVolume(1.0);
     setCanModifyVolume(false);
+    setCanSeek(false);
     providers = []
   }
 
@@ -87,6 +90,12 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
   const setServiceIsAvailable = (value: boolean) => {
     serviceIsAvailable = value;
     setServiceIsAvailable_internal(value);
+  };
+
+  const [canSeekGlobal, setCanSeek_internal] = useState<boolean>(canSeek);
+  const setCanSeek = (value: boolean) => {
+    canSeek = value;
+    setCanSeek_internal(value);
   };
 
   const [currentArtistGlobal, setCurrentArtist_internal] = useState<string>(currentArtist);
@@ -132,16 +141,20 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
 
   const [currentServiceProviderGlobal, setCurrentServiceProvider_internal] = useState<string>(currentServiceProvider);
   const setCurrentServiceProvider = (value: string) => {
+    changedProvider = true;
+
     // no support for file links yet :( sorry
     if (value == "" ||  value == null || typeof(value) != 'string')
     {
       currentServiceProvider = "";
       setCurrentServiceProvider_internal("");
+      setCanModifyVolume(false);
       return;
     }
     
     currentServiceProvider = value;
     setCurrentServiceProvider_internal(value);
+    python.sp_set_media_player(currentServiceProvider);
   };
 
   const [currentTrackProgressGlobal, setCurrentTrackProgress_internal] = useState<number>(currentTrackProgress);
@@ -169,13 +182,11 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
     {
       currentVolume = value;
       setCurrentVolume_internal(value);
-      setCanModifyVolume(true);
       return;
     }
    
     currentVolume = 1.0;
     setCurrentVolume_internal(value);
-    setCanModifyVolume(false);
   };
 
   const [canModifyVolumeGlobal, setCanModifyVolume_internal] = useState<boolean>(canModifyVolume);
@@ -209,7 +220,6 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
   };
 
   findDBUSServices = function() {
-    console.debug("Finding dbus services");
     python.resolve(python.sp_list_media_players(),  (mediaPlayers: string) => {
       if (mediaPlayers == "Unavailable" || mediaPlayers == null || typeof(mediaPlayers) != 'string' || mediaPlayers == "")
       {
@@ -222,7 +232,6 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
       if (providers.length > 0 && currentServiceProvider == "")
       {
         setCurrentServiceProvider(providers[0]);
-        python.sp_set_media_player(currentServiceProvider);
       }
 
       providers.forEach((provider: string) => {
@@ -262,11 +271,41 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
       setCurrentArtUrl(dataLookup["artUrl"]);
       setCurrentArtist(dataLookup["artist"]);
       setCurrentTrackLength(dataLookup["length"]);
+
+       // In some rare cases for the first time the metaData can be correct but it won't have any actual info yet
+      if (currentTrackId == "" && dataLookup["trackid"] != "")
+      {
+        // Force us the re-cache the volume/seek controls.
+        changedProvider = true;
+      }
+      
       setCurrentTrackId(dataLookup["trackid"]);
 
       python.resolve(python.sp_track_progress(), setCurrentTrackProgress);
       python.resolve(python.sp_track_status(), setCurrentTrackStatus);
-      python.resolve(python.sp_get_volume(), setCurrentVolume);
+
+      if (changedProvider)
+      {
+        isSettingVolume = true;
+        isSeeking = true;
+        
+        python.resolve(python.sp_test_volume_control(), (result: string) => {
+            setCanModifyVolume(result == "true");
+            isSettingVolume = false;
+            if (result == "true")
+              python.resolve(python.sp_get_volume(), setCurrentVolume);
+        });
+
+        python.resolve(python.sp_can_seek(), (result: string) => {
+          setCanSeek(result == "true");
+          isSeeking = false;
+      });
+
+        changedProvider = false;
+      }
+
+      if (canModifyVolume)
+        python.resolve(python.sp_get_volume(), setCurrentVolume);
   });
   };
 
@@ -339,7 +378,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
       </div>
       {
       currentTrackLengthGlobal > 1 ?
-      <SliderField value={currentTrackProgressGlobal / currentTrackLengthGlobal} min={0} max={1} step={0.05} 
+      <SliderField value={currentTrackProgressGlobal / currentTrackLengthGlobal} min={0} max={1} step={0.05} disabled={!canSeekGlobal}
         onChange={(value: number) => {
           const roundedProgress = Math.round(value * currentTrackLength);
           python.execute(python.sp_setPosition(roundedProgress, currentTrackId));
@@ -459,31 +498,17 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
   );
 };
 
-const Title: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
+const Title: VFC<{}> = () => {
   return (
     <Focusable style={titleStyles} className={staticClasses.Title}>
         <div style={{ marginRight: 'auto', flex: 0.9 }}>Music Control</div>
-        <DialogButton
-          style={{ height: '28px', width: '40px', minWidth: 0, padding: '10px 12px' }}>
-          <FaCog style={{ marginTop: '-4px', display: 'block' }} />
-        </DialogButton>
     </Focusable>
   );
 }
 
-const Settings: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
-  return (
-    <PanelSection>
-      <div className={staticClasses.PanelSectionTitle}>Settings</div>
-    <PanelSectionRow>
-    </PanelSectionRow>
-    </PanelSection>
-        );
-}
-
 export default definePlugin((serverApi: ServerAPI) => {
   return {
-    title: <Title serverAPI={serverApi} />,
+    title: <Title/>,
     content: <Content serverAPI={serverApi} />,
     icon: <FaMusic />,
     onDismount() {
