@@ -40,7 +40,7 @@ export const VolumeControl: VFC = () => {
     };
   }, []);
 
-  if (!state.serviceIsAvailable || !state.canModifyVolume) return <div />;
+  if (!state.hasAvailableTrack || !state.canModifyVolume) return <div />;
   return (
     <div>
       <div className={staticClasses.PanelSectionTitle}>Playback Volume</div>

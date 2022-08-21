@@ -5,7 +5,6 @@ import {
 } from "decky-frontend-lib";
 
 import { VFC, useEffect, useRef } from "react";
-
 import { musicControlDividerStyle } from "./../styles/style";
 
 import { AlbumArt } from ".//../components/albumArt";
@@ -24,7 +23,7 @@ import { VolumeControl } from "./volumeControl";
 
 export const Content: VFC = () => {
   const { state, dispatch } = useStateContext();
-  const periodicHookRef = useRef<NodeJS.Timer | null>(null);
+  const updateCallback = useRef<() => void>();
 
   const updateStatus = () => {
     python.resolve(python.getMediaPlayerList(), (mediaPlayers: string) => {
@@ -41,18 +40,31 @@ export const Content: VFC = () => {
       const providers = mediaPlayers.split(",");
       dispatch({ type: AppActions.SetProviders, value: providers });
 
-      if (providers.length > 0 && state.currentServiceProvider == "") {
-        dispatch({
-          type: AppActions.SetCurrentServiceProvider,
-          value: providers[0],
-        });
+      if (
+        !providers.includes(state.currentServiceProvider) ||
+        state.currentServiceProvider == ""
+      ) {
+        if (providers.length > 0) {
+          dispatch({
+            type: AppActions.SetCurrentServiceProvider,
+            value: providers[0],
+          });
+          python.setMediaPlayer(providers[0]);
+        } else {
+          if (state.currentServiceProvider == "") return;
+          dispatch({
+            type: AppActions.SetCurrentServiceProvider,
+            value: "",
+          });
+          python.setMediaPlayer("");
+          return;
+        }
       }
 
       providers.forEach((provider: string) => {
         const identityIndex = state.providersToIdentity.findIndex(
           (mapping: ProviderIdentity) => mapping.provider == provider
         );
-
         if (identityIndex >= 0) return;
 
         python.resolve(
@@ -83,8 +95,7 @@ export const Content: VFC = () => {
   const updateTrackData = () => {
     python.resolve(python.getMetaData(), (metaData: string) => {
       if (!isValidMetaData(metaData)) {
-        dispatch({ type: AppActions.SetDefaultState });
-        updateStatus();
+        dispatch({ type: AppActions.SetDefaultMeta });
         return;
       }
 
@@ -102,8 +113,8 @@ export const Content: VFC = () => {
       if (
         (state.currentTrackId == "" ||
           state.currentTrackId == defaultState.currentTrackId) &&
-        "trackId" in metaObject &&
-        metaObject["trackId"] != ""
+        "trackid" in metaObject &&
+        metaObject["trackid"] != ""
       ) {
         dispatch({ type: AppActions.SetHasChangedProvider, value: true });
       }
@@ -127,6 +138,7 @@ export const Content: VFC = () => {
         });
 
       if (state.hasChangedProvider) {
+        console.debug("Changed MusicControl provider, testing for featureset.");
         python.resolve(python.testVolumeControl(), (result: string) => {
           dispatch({
             type: AppActions.SetCanModifyVolume,
@@ -161,22 +173,18 @@ export const Content: VFC = () => {
     });
   };
 
-  const onDismount = () => {
-    clearInterval(periodicHookRef!.current!);
-    periodicHookRef.current = null;
-  };
+  useEffect(() => {
+    updateCallback.current = updateStatus;
+  });
 
   useEffect(() => {
     console.debug("Setting up periodic hooks for MusicControl.");
+    function tick() {
+      updateCallback!.current!();
+    }
 
-    periodicHookRef.current = setInterval(function () {
-      updateStatus();
-    }, 1000);
-
-    // Clear the interval when the component unmounts
-    return () => {
-      onDismount();
-    };
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
   }, []);
 
   return (

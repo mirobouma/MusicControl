@@ -38,12 +38,7 @@ export const getValidAlbumArtUrlInRecord = (
   if (!(key in record)) return defaultState.currentArtUrl;
   const value = record[key];
 
-  if (
-    value == "" ||
-    value == null ||
-    typeof value != "string" ||
-    (typeof value !== "undefined" && value.startsWith("file:///"))
-  )
+  if (value == "" || value == null || typeof value != "string")
     return defaultState.currentArtUrl;
 
   return value;

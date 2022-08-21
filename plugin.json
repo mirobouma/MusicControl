@@ -1,7 +1,7 @@
 {
   "name": "MusicControl",
   "author": "Miro Bouma",
-  "flags": [],
+  "flags": ["debug"],
   "publish": {
     "tags": ["music"],
     "description": "Control running media players using the DBUS interface. Media player has to be started through game mode.",

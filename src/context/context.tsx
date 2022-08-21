@@ -1,6 +1,6 @@
 import React, { useReducer, createContext } from "react";
 import * as utils from "../utils";
-import { defaultState } from "./defaultState";
+import { defaultMeta, defaultState } from "./defaultState";
 
 type ProviderIdentity = {
   provider: string;
@@ -9,14 +9,16 @@ type ProviderIdentity = {
 
 enum AppActions {
   SetDefaultState,
+  SetDefaultMeta,
   SetState,
   SetHasChangedProvider,
-  SetIsServiceAvailable,
+  SetHasAvailableTrack,
   SetIsSeeking,
   SeekToPosition,
   SetIsAdjustingVolume,
   AdjustVolumeByUser,
   SetPlayingState,
+  SetPlayingStateByUser,
   SetCurrentServiceProvider,
   SetTrackProgress,
   SetCanModifyVolume,
@@ -25,17 +27,27 @@ enum AppActions {
   SetCanSeek,
   SetProviders,
   AddProviderIdentity,
+  SetHasChangedPlaybackState,
 }
 
 type Action =
   | { type: AppActions.SetDefaultState }
+  | { type: AppActions.SetDefaultMeta }
   | { type: AppActions.SetState; value: State }
   | { type: AppActions.SetIsSeeking; value: State["isSeeking"] }
   | { type: AppActions.SeekToPosition; value: State["currentTrackProgress"] }
   | { type: AppActions.SetPlayingState; value: State["currentTrackStatus"] }
+  | {
+      type: AppActions.SetPlayingStateByUser;
+      value: State["currentTrackStatus"];
+    }
   | { type: AppActions.SetIsAdjustingVolume; value: State["isSettingVolume"] }
   | { type: AppActions.AdjustVolumeByUser; value: State["currentVolume"] }
   | { type: AppActions.SetVolume; value: State["currentVolume"] }
+  | {
+      type: AppActions.SetHasChangedPlaybackState;
+      value: State["hasChangedPlaybackState"];
+    }
   | { type: AppActions.SetTrackProgress; value: State["currentTrackProgress"] }
   | { type: AppActions.SetCanModifyVolume; value: State["canModifyVolume"] }
   | { type: AppActions.SetCanSeek; value: State["canSeek"] }
@@ -53,8 +65,8 @@ type Action =
       value: State["currentServiceProvider"];
     }
   | {
-      type: AppActions.SetIsServiceAvailable;
-      value: State["serviceIsAvailable"];
+      type: AppActions.SetHasAvailableTrack;
+      value: State["hasAvailableTrack"];
     }
   | {
       type: AppActions.SetMetaData;
@@ -64,10 +76,11 @@ type Action =
 type Dispatch = (action: Action) => void;
 
 type State = {
+  hasChangedPlaybackState: boolean;
   hasChangedProvider: boolean;
   isSeeking: boolean;
   isSettingVolume: boolean;
-  serviceIsAvailable: boolean;
+  hasAvailableTrack: boolean;
   currentSong: string;
   currentArtist: string;
   currentArtUrl: string;
@@ -96,11 +109,17 @@ function mainReducer(state: State, action: Action) {
     case AppActions.SetDefaultState: {
       return { ...state, ...defaultState };
     }
+    case AppActions.SetDefaultMeta: {
+      return { ...state, ...defaultMeta };
+    }
     case AppActions.SetState: {
       return { ...state, ...action.value };
     }
     case AppActions.SetIsSeeking: {
       return { ...state, isSeeking: action.value };
+    }
+    case AppActions.SetHasChangedPlaybackState: {
+      return { ...state, hasChangedPlaybackState: action.value };
     }
     case AppActions.SetCanSeek: {
       return { ...state, canSeek: action.value };
@@ -109,6 +128,10 @@ function mainReducer(state: State, action: Action) {
       return { ...state, currentTrackProgress: action.value, isSeeking: true };
     }
     case AppActions.SetPlayingState: {
+      if (state.hasChangedPlaybackState) return state;
+      return { ...state, currentTrackStatus: action.value };
+    }
+    case AppActions.SetPlayingStateByUser: {
       return { ...state, currentTrackStatus: action.value };
     }
     case AppActions.SetIsAdjustingVolume: {
@@ -148,15 +171,18 @@ function mainReducer(state: State, action: Action) {
     }
     case AppActions.SetCurrentServiceProvider: {
       const hasChanged = state.currentServiceProvider != action.value;
-      return {
-        ...state,
-        currentServiceProvider: action.value,
-        hasChangedProvider: hasChanged,
-      };
+      if (hasChanged) {
+        return {
+          ...state,
+          currentServiceProvider: action.value,
+          hasChangedProvider: true,
+        };
+      }
+
+      return state;
     }
-    case AppActions.SetIsServiceAvailable: {
-      if (!action.value) return { ...state, ...defaultState };
-      return { ...state, serviceIsAvailable: action.value };
+    case AppActions.SetHasAvailableTrack: {
+      return { ...state, hasAvailableTrack: action.value };
     }
     case AppActions.SetMetaData: {
       const title = utils.isValidStringValueInRecord(action.value, "title")
@@ -180,7 +206,7 @@ function mainReducer(state: State, action: Action) {
         currentSong: title,
         currentArtist: artist,
         currentArtUrl: albumUrl,
-        serviceIsAvailable: true,
+        hasAvailableTrack: true,
         currentTrackLength: trackLength,
         currentTrackId: trackId,
       };

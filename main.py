@@ -1,6 +1,8 @@
+from linecache import cache
 import subprocess
 import os
 import sys
+import shutil
 
 SP_DEST = "org.mpris.MediaPlayer2.spotify"
 
@@ -12,6 +14,8 @@ PROP_SET_PATH = "org.freedesktop.DBus.Properties.Set"
 
 class Plugin:
     player = SP_DEST
+    previousCachedImage = ""
+    cacheDir = ""
 
     def _sp_player_dbus(self, command, parameters):
         env = os.environ.copy()
@@ -120,7 +124,7 @@ class Plugin:
             string:\"{MP_MEMB}\" string:'Identity' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev" \
-            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0].replace("\"", "")
+            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0].replace("\"", "").replace("\n", "")
         return result
 
     async def get_meta_data(self):
@@ -143,6 +147,28 @@ class Plugin:
         except:
             result = "Unavailable"
         return result
+    
+    async def cache_album_art(self, artUrl: str):
+        if (not artUrl.startswith('file:///')):
+            return artUrl
+        if (self.previousCachedImage != ""):
+            os.remove(self.previousCachedImage)
+            self.previousCachedImage = ""
+
+        artUrl = artUrl.removeprefix('file://')
+        if (not os.path.exists(artUrl)):
+            return ""
+        
+        baseName = os.path.basename(artUrl)
+        target = os.path.join(self.cacheDir, baseName)
+
+        print("Cache-copying: " +  artUrl + " to" + target)
+        sys.stdout.flush()
+
+        shutil.copy2(artUrl, target)
+        self.previousCachedImage = target
+
+        return ("http://127.0.0.1:1337/plugins/MusicControl/assets/cache/" + baseName)
 
     async def sp_list_media_players(self):
         env = os.environ.copy()
@@ -174,5 +200,15 @@ class Plugin:
         return self.player
 
     async def _main(self):
+        self.cacheDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist/assets/cache')
+        print("Cache dir: " +  self.cacheDir)
+        sys.stdout.flush()
+
+        self.previousCachedImage = ""
         self.player = SP_DEST
+
+        if os.path.isdir(self.cacheDir):
+            os.rmdir(self.cacheDir)
+        
+        os.mkdir(self.cacheDir)
         pass
