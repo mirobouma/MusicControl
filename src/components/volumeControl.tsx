@@ -9,7 +9,7 @@ export const VolumeControl: VFC = () => {
 
   const onSliderChanged = (value: number) => {
     const normalizedValue = (value /= 100.0);
-    python.execute(python.sp_set_volume(normalizedValue));
+    python.execute(python.triggerSetVolume(normalizedValue));
 
     dispatch({
       type: AppActions.AdjustVolumeByUser,

@@ -27,7 +27,7 @@ export const Content: VFC = () => {
   const periodicHookRef = useRef<NodeJS.Timer | null>(null);
 
   const updateStatus = () => {
-    python.resolve(python.sp_list_media_players(), (mediaPlayers: string) => {
+    python.resolve(python.getMediaPlayerList(), (mediaPlayers: string) => {
       if (
         mediaPlayers == "Unavailable" ||
         mediaPlayers == null ||
@@ -55,12 +55,15 @@ export const Content: VFC = () => {
 
         if (identityIndex >= 0) return;
 
-        python.resolve(python.sp_identity(provider), (providerName: string) => {
-          dispatch({
-            type: AppActions.AddProviderIdentity,
-            value: { provider: provider, name: providerName },
-          });
-        });
+        python.resolve(
+          python.getProviderIdentity(provider),
+          (providerName: string) => {
+            dispatch({
+              type: AppActions.AddProviderIdentity,
+              value: { provider: provider, name: providerName },
+            });
+          }
+        );
       });
 
       updateTrackData();
@@ -106,17 +109,17 @@ export const Content: VFC = () => {
       }
 
       if (!state.isSeeking) {
-        python.resolve(python.sp_track_progress(), (progress: number) => {
+        python.resolve(python.getTrackProgress(), (progress: number) => {
           dispatch({ type: AppActions.SetTrackProgress, value: progress });
         });
       }
 
-      python.resolve(python.sp_track_status(), (status: string) => {
+      python.resolve(python.triggerTrackStatus(), (status: string) => {
         dispatch({ type: AppActions.SetPlayingState, value: status });
       });
 
       if (state.canModifyVolume)
-        python.resolve(python.sp_get_volume(), (volume: number) => {
+        python.resolve(python.getTrackVolume(), (volume: number) => {
           dispatch({
             type: AppActions.SetVolume,
             value: volume,
@@ -124,14 +127,14 @@ export const Content: VFC = () => {
         });
 
       if (state.hasChangedProvider) {
-        python.resolve(python.sp_test_volume_control(), (result: string) => {
+        python.resolve(python.testVolumeControl(), (result: string) => {
           dispatch({
             type: AppActions.SetCanModifyVolume,
             value: result == "true",
           });
 
           if (result == "true")
-            python.resolve(python.sp_get_volume(), (volume: number) => {
+            python.resolve(python.getTrackVolume(), (volume: number) => {
               dispatch({
                 type: AppActions.AdjustVolumeByUser,
                 value: volume,
@@ -143,7 +146,7 @@ export const Content: VFC = () => {
             });
         });
 
-        python.resolve(python.sp_can_seek(), (result: string) => {
+        python.resolve(python.getCanSeek(), (result: string) => {
           dispatch({
             type: AppActions.SetCanSeek,
             value: result == "true",

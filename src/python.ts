@@ -30,28 +30,27 @@ export function setServer(s: ServerAPI) {
 }
 
 // Python functions
-export function startDbusDaemon(): Promise<any> {
-  return server!.callPluginMethod("start_dbus_daemon", {});
-}
-
-// Python functions
 export function getMetaData(): Promise<any> {
   return server!.callPluginMethod("get_meta_data", {});
 }
 
-export function sp_play(): Promise<any> {
+export function triggerPlay(): Promise<any> {
   return server!.callPluginMethod("sp_play", {});
 }
 
-export function sp_next(): Promise<any> {
+export function triggerNext(): Promise<any> {
   return server!.callPluginMethod("sp_next", {});
 }
 
-export function sp_seek(amount: number): Promise<any> {
+export function triggerPrevious(): Promise<any> {
+  return server!.callPluginMethod("sp_previous", {});
+}
+
+export function triggerSeek(amount: number): Promise<any> {
   return server!.callPluginMethod("sp_seek", { amount });
 }
 
-export function sp_setPosition(
+export function triggerSetPosition(
   position: number,
   trackid: string
 ): Promise<any> {
@@ -61,55 +60,47 @@ export function sp_setPosition(
   });
 }
 
-export function sp_track_status(): Promise<any> {
+export function triggerTrackStatus(): Promise<any> {
   return server!.callPluginMethod("sp_track_status", {});
 }
 
-export function sp_previous(): Promise<any> {
-  return server!.callPluginMethod("sp_previous", {});
-}
-
-export function sp_identity(orgPath: string): Promise<any> {
+export function getProviderIdentity(orgPath: string): Promise<any> {
   return server!.callPluginMethod("sp_identity", { orgPath });
 }
 
-export function sp_track_progress(): Promise<any> {
+export function getTrackProgress(): Promise<any> {
   return server!.callPluginMethod("sp_track_progress", {});
 }
 
-export function sp_get_volume(): Promise<any> {
+export function getTrackVolume(): Promise<any> {
   return server!.callPluginMethod("sp_get_volume", {});
 }
 
-export function sp_can_seek(): Promise<any> {
+export function getCanSeek(): Promise<any> {
   return server!.callPluginMethod("sp_can_seek", {});
 }
 
-export function sp_set_volume(volume: number): Promise<any> {
+export function triggerSetVolume(volume: number): Promise<any> {
   return server!.callPluginMethod("sp_set_volume", { volume });
 }
 
-export function sp_list_media_players(): Promise<any> {
+export function getMediaPlayerList(): Promise<any> {
   return server!.callPluginMethod("sp_list_media_players", {});
 }
 
-export function sp_test_volume_control(): Promise<any> {
+export function testVolumeControl(): Promise<any> {
   return server!.callPluginMethod("sp_test_volume_control", {});
 }
 
-export function sp_get_media_player(): Promise<any> {
+export function getMediaPlayer(): Promise<any> {
   return server!.callPluginMethod("sp_get_media_player", {});
 }
 
-export function sp_set_media_player(player: string): Promise<any> {
+export function setMediaPlayer(player: string): Promise<any> {
   if (player == "")
     return server!.callPluginMethod("sp_set_media_player", {
       player: "org.mpris.MediaPlayer2.spotify",
     });
 
   return server!.callPluginMethod("sp_set_media_player", { player });
-}
-
-export function sp_start(): Promise<any> {
-  return server!.callPluginMethod("sp_start", {});
 }

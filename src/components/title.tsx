@@ -9,7 +9,7 @@ const titleStyles: CSSProperties = {
   boxShadow: "unset",
 };
 
-export const Title: VFC<any> = () => {
+export const Title: VFC = () => {
   return (
     <Focusable style={titleStyles} className={staticClasses.Title}>
       <div style={{ marginRight: "auto", flex: 0.9 }}>Music Control</div>

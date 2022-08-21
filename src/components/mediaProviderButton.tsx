@@ -39,7 +39,7 @@ export const MediaProviderButton: VFC<MediaProviderProps> = (
           return (
             <MenuItem
               onSelected={() => {
-                python.sp_set_media_player(provider);
+                python.setMediaPlayer(provider);
                 dispatch({
                   type: AppActions.SetCurrentServiceProvider,
                   value: provider,

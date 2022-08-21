@@ -11,7 +11,7 @@ export const SongProgressSlider: VFC = () => {
     const roundedProgress = Math.round(value * state.currentTrackLength);
 
     python.execute(
-      python.sp_setPosition(roundedProgress, state.currentTrackId)
+      python.triggerSetPosition(roundedProgress, state.currentTrackId)
     );
 
     dispatch({

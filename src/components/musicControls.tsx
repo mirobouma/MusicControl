@@ -10,7 +10,7 @@ export const MusicControls: VFC = () => {
   const { state, dispatch } = useStateContext();
 
   const onClickPrevious = () => {
-    python.execute(python.sp_previous());
+    python.execute(python.triggerPrevious());
   };
 
   const onClickPlayPause = () => {
@@ -21,11 +21,11 @@ export const MusicControls: VFC = () => {
       });
     }
 
-    python.execute(python.sp_play());
+    python.execute(python.triggerPlay());
   };
 
   const onClickNext = () => {
-    python.execute(python.sp_next());
+    python.execute(python.triggerNext());
   };
 
   return (
