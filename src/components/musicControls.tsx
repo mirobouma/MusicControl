@@ -14,10 +14,13 @@ export const MusicControls: VFC = () => {
   };
 
   const onClickPlayPause = () => {
-    dispatch({
-      type: AppActions.SetPlayingState,
-      value: state.currentTrackStatus == "Playing" ? "Paused" : "Playing",
-    });
+    if (state.serviceIsAvailable) {
+      dispatch({
+        type: AppActions.SetPlayingState,
+        value: state.currentTrackStatus == "Playing" ? "Paused" : "Playing",
+      });
+    }
+
     python.execute(python.sp_play());
   };
 
