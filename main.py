@@ -15,7 +15,8 @@ PROP_SET_PATH = "org.freedesktop.DBus.Properties.Set"
 class Plugin:
     player = SP_DEST
     previousCachedImage = ""
-    cacheDir = ""
+    cacheDir : str = ""
+    symLinkPath : str = ""
 
     def _sp_player_dbus(self, command, parameters):
         env = os.environ.copy()
@@ -168,7 +169,7 @@ class Plugin:
         shutil.copy2(artUrl, target)
         self.previousCachedImage = target
 
-        return ("http://127.0.0.1:1337/plugins/MusicControl/assets/cache/" + baseName)
+        return ("https://steamloopback.host/images/deckycache_musicControl/" + baseName)
 
     async def sp_list_media_players(self):
         env = os.environ.copy()
@@ -200,15 +201,19 @@ class Plugin:
         return self.player
 
     async def _main(self):
-        self.cacheDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist/assets/cache')
-        print("Cache dir: " +  self.cacheDir)
-        sys.stdout.flush()
+        self.cacheDir = "/home/deck/.deckycache/MusicControl"
+        self.symLinkPath = "/home/deck/.local/share/Steam/steamui/images/deckycache_musicControl"
 
         self.previousCachedImage = ""
         self.player = SP_DEST
 
         if os.path.isdir(self.cacheDir):
-            os.rmdir(self.cacheDir)
+            shutil.rmtree(self.cacheDir)
+
+        if not os.path.isdir(self.cacheDir):
+            os.makedirs(self.cacheDir)
         
-        os.mkdir(self.cacheDir)
+        if (not os.path.exists(self.symLinkPath)):
+            os.symlink(self.cacheDir, self.symLinkPath, True)
+
         pass

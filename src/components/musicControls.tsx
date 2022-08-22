@@ -3,7 +3,10 @@ import { DialogButton, Focusable } from "decky-frontend-lib";
 import { useEffect, useRef, VFC } from "react";
 import { useStateContext, AppActions } from "../context/context";
 import * as python from "./../python";
-import { musicControlButtonStyle } from "../styles/style";
+import {
+  musicControlButtonStyle,
+  musicControlButtonStyleFirst,
+} from "../styles/style";
 import { FaPlay, FaPause, FaFastForward, FaFastBackward } from "react-icons/fa";
 
 export const MusicControls: VFC = () => {
@@ -57,7 +60,10 @@ export const MusicControls: VFC = () => {
       style={{ marginTop: "10px", marginBottom: "10px", display: "flex" }}
       flow-children="horizontal"
     >
-      <DialogButton style={musicControlButtonStyle} onClick={onClickPrevious}>
+      <DialogButton
+        style={musicControlButtonStyleFirst}
+        onClick={onClickPrevious}
+      >
         <FaFastBackward style={{ marginTop: "-4px", display: "block" }} />
       </DialogButton>
       <DialogButton style={musicControlButtonStyle} onClick={onClickPlayPause}>

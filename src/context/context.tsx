@@ -159,7 +159,7 @@ function mainReducer(state: State, action: Action) {
       };
     }
     case AppActions.SetCanModifyVolume: {
-      return { ...state, canModifyVolume: true };
+      return { ...state, canModifyVolume: action.value };
     }
     case AppActions.AdjustVolumeByUser: {
       return { ...state, currentVolume: action.value, isSettingVolume: true };

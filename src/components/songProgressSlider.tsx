@@ -1,5 +1,5 @@
 import { useEffect, useRef, VFC } from "react";
-import { SliderField } from "decky-frontend-lib";
+import { PanelSectionRow, SliderField } from "decky-frontend-lib";
 import { useStateContext, AppActions } from "../context/context";
 import * as python from "./../python";
 
@@ -45,13 +45,15 @@ export const SongProgressSlider: VFC = () => {
 
   if (state.currentTrackLength <= 1) return <div></div>;
   return (
-    <SliderField
-      value={state.currentTrackProgress / state.currentTrackLength}
-      min={0}
-      max={1}
-      step={0.05}
-      disabled={!state.canSeek}
-      onChange={onSliderChanged}
-    ></SliderField>
+    <PanelSectionRow>
+      <SliderField
+        value={state.currentTrackProgress / state.currentTrackLength}
+        min={0}
+        max={1}
+        step={0.05}
+        disabled={!state.canSeek}
+        onChange={onSliderChanged}
+      ></SliderField>
+    </PanelSectionRow>
   );
 };

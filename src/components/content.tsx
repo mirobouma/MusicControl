@@ -7,6 +7,7 @@ import {
 import { VFC, useEffect, useRef } from "react";
 import { musicControlDividerStyle } from "./../styles/style";
 
+import { InfoSection } from ".//../components/infoSection";
 import { AlbumArt } from ".//../components/albumArt";
 import { ArtistInfoPanel } from ".//../components/artistInfoPanel";
 import { SongProgressSlider } from ".//../components/songProgressSlider";
@@ -182,8 +183,9 @@ export const Content: VFC = () => {
     function tick() {
       updateCallback!.current!();
     }
-
     const id = setInterval(tick, 1000);
+    updateStatus();
+
     return () => clearInterval(id);
   }, []);
 
@@ -204,6 +206,7 @@ export const Content: VFC = () => {
       <PanelSectionRow>
         <MediaProviderButton currentProvider={state.currentServiceProvider} />
       </PanelSectionRow>
+      <InfoSection show={state.currentServiceProvider == ""} />
     </PanelSection>
   );
 };

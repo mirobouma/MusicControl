@@ -7,9 +7,19 @@ export const musicControlDividerStyle: CSSProperties = {
   right: "0",
   height: "1px",
   background: "#23262e",
-  width: "100%",
-  marginTop: "5px",
-  marginBottom: "5px",
+  width: "calc(100% + 32px)",
+  marginLeft: "-16px",
+  marginRight: "-16px",
+};
+
+export const musicControlButtonStyleFirst: CSSProperties = {
+  marginLeft: "0px",
+  height: "30px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "5px 0px 0px 0px",
+  minWidth: "0",
 };
 
 export const musicControlButtonStyle: CSSProperties = {
@@ -27,7 +37,7 @@ export const musicControlFieldDividerStyle: CSSProperties = {
   bottom: "-0.5px",
   left: "0",
   right: "0",
-  height: "2px",
+  height: "1px",
   background: "#23262e",
   width: "100%",
   marginTop: "5px",

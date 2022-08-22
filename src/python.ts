@@ -34,6 +34,10 @@ export function getMetaData(): Promise<any> {
   return server!.callPluginMethod("get_meta_data", {});
 }
 
+export function cacheAlbumArt(artUrl: string): Promise<any> {
+  return server!.callPluginMethod("cache_album_art", { artUrl: artUrl });
+}
+
 export function triggerPlay(): Promise<any> {
   return server!.callPluginMethod("sp_play", {});
 }
@@ -90,10 +94,6 @@ export function getMediaPlayerList(): Promise<any> {
 
 export function testVolumeControl(): Promise<any> {
   return server!.callPluginMethod("sp_test_volume_control", {});
-}
-
-export function getMediaPlayer(): Promise<any> {
-  return server!.callPluginMethod("sp_get_media_player", {});
 }
 
 export function setMediaPlayer(player: string): Promise<any> {

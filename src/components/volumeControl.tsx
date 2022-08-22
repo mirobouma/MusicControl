@@ -1,5 +1,9 @@
 import { useEffect, useRef, VFC } from "react";
-import { SliderField, staticClasses } from "decky-frontend-lib";
+import {
+  PanelSectionRow,
+  SliderField,
+  staticClasses,
+} from "decky-frontend-lib";
 import { useStateContext, AppActions } from "../context/context";
 import * as python from "./../python";
 
@@ -44,7 +48,7 @@ export const VolumeControl: VFC = () => {
   return (
     <div>
       <div className={staticClasses.PanelSectionTitle}>Playback Volume</div>
-      <div>
+      <PanelSectionRow>
         <SliderField
           value={Math.round(state.currentVolume * 100)}
           min={0}
@@ -52,7 +56,7 @@ export const VolumeControl: VFC = () => {
           step={1}
           onChange={onSliderChanged}
         ></SliderField>
-      </div>
+      </PanelSectionRow>
     </div>
   );
 };
