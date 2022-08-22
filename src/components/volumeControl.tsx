@@ -47,7 +47,12 @@ export const VolumeControl: VFC = () => {
   if (!state.hasAvailableTrack || !state.canModifyVolume) return <div />;
   return (
     <div>
-      <div className={staticClasses.PanelSectionTitle}>Playback Volume</div>
+      <div
+        style={{ marginTop: "5px" }}
+        className={staticClasses.PanelSectionTitle}
+      >
+        Playback Volume
+      </div>
       <PanelSectionRow>
         <SliderField
           value={Math.round(state.currentVolume * 100)}
