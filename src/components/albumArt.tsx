@@ -33,7 +33,11 @@ export const AlbumArt: VFC<{ albumArt: string }> = ({ albumArt }) => {
       <img
         style={{ borderRadius: "5px", width: "80px", height: "80px" }}
         src={currentDisplayUrl}
-      />
+        onError={({ currentTarget }) => {
+          if (currentTarget.src == defaultState.currentArtUrl) return;
+          currentTarget.src = defaultState.currentArtUrl;
+        }}
+      ></img>
     </div>
   );
 };

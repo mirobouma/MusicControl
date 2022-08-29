@@ -34,7 +34,7 @@ export const MediaProviderButton: VFC<MediaProviderProps> = (
 
   const handleOnClick = (e: MouseEvent) =>
     showContextMenu(
-      <Menu label="Select Media Control" cancelText="Cancel">
+      <Menu label="Select Media Player" cancelText="Cancel">
         {state.providers.map((provider: string) => {
           return (
             <MenuItem
@@ -55,7 +55,7 @@ export const MediaProviderButton: VFC<MediaProviderProps> = (
     );
 
   return (
-    <ButtonItem layout="below" onClick={handleOnClick}>
+    <ButtonItem layout="below" bottomSeparator={false} onClick={handleOnClick}>
       {props.currentProvider == ""
         ? "No Media Player Found"
         : getDisplayNameForProvider(props.currentProvider)}

@@ -3,8 +3,8 @@
   "author": "Miro Bouma",
   "flags": [],
   "publish": {
-    "tags": ["music"],
-    "description": "Control running media players using the DBUS interface. Media player has to be started through game mode.",
+    "tags": ["music", "media", "mpris"],
+    "description": "Control running media players using the DBUS interface (MPRIS). Media player has to be started through game mode.",
     "image": "https://raw.githubusercontent.com/mirobouma/MusicControl/main/assets/screenshot.png"
   }
 }
