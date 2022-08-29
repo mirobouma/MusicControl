@@ -207,10 +207,15 @@ export const Content: VFC = () => {
       <PanelSectionRow>
         <MediaProviderButton currentProvider={state.currentServiceProvider} />
       </PanelSectionRow>
+<<<<<<< HEAD
       <PanelSectionRow>
         <InfoSection />
       </PanelSectionRow>
       <LaunchAppButton />
+=======
+      <LaunchAppButton />
+      <InfoSection show={state.currentServiceProvider == ""} />
+>>>>>>> bedd9942d94552beec615156fea710718e01178a
     </PanelSection>
   );
 };
