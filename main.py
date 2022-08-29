@@ -1,3 +1,4 @@
+import json
 from linecache import cache
 import subprocess
 import os
@@ -22,19 +23,19 @@ class Plugin:
         env = os.environ.copy()
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {MP_MEMB_PLAYER}.{command} \
-            {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0]
 
     def _sp_dbus(self, command, parameters):
         env = os.environ.copy()
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {MP_MEMB}.{command} \
-            {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0]
 
     def _sp_dbus_set(self, command, parameters):
         env = os.environ.copy()
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_SET_PATH} string:\"{MP_MEMB_PLAYER}\" \
-            string:\"{command}\" {parameters} ", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            string:\"{command}\" {parameters} ", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0]
 
     async def _sp_open(self, uri):
         return self._sp_player_dbus(self, "OpenUri", f"string:{uri}")
@@ -67,7 +68,7 @@ class Plugin:
             string:\"{MP_MEMB_PLAYER}\" string:'PlaybackStatus' \
             | tail -1 \
             | cut -d \"\\\"\" -f2 | tr -d \"\n\"" \
-            ,stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            ,stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0]
         return result
 
     async def sp_track_progress(self):
@@ -77,7 +78,7 @@ class Plugin:
             string:\"{MP_MEMB_PLAYER}\" string:'Position' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
-            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0]
         return result
 
     async def sp_get_volume(self):
@@ -87,7 +88,7 @@ class Plugin:
             string:\"{MP_MEMB_PLAYER}\" string:'Volume' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
-            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0]
         return result
 
     async def sp_can_seek(self):
@@ -97,7 +98,7 @@ class Plugin:
             string:\"{MP_MEMB_PLAYER}\" string:'CanSeek' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
-            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0]
         return result
 
     async def sp_test_volume_control(self):
@@ -125,7 +126,7 @@ class Plugin:
             string:\"{MP_MEMB}\" string:'Identity' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev" \
-            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0].replace("\"", "").replace("\n", "")
+            , stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0].replace("\"", "").replace("\n", "")
         return result
 
     async def get_meta_data(self):
@@ -144,7 +145,7 @@ class Plugin:
                 | sed -E 's/\"$//'                              `# ...and trailing quotes.`  \
                 | sed -E 's/\"+/|/'                             `# Regard "" as seperator.`  \
                 | sed -E 's/ +/ /g'                            `# Merge consecutive spaces.`",  
-                stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+                stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0]
         except:
             result = "Unavailable"
         return result
@@ -171,12 +172,59 @@ class Plugin:
 
         return ("https://steamloopback.host/images/deckycache_musicControl/" + baseName)
 
+    async def get_flatpaks(self):
+        proc = subprocess.Popen('flatpak list -d --app | awk  \'BEGIN {FS="\\t"} {print "{\\"name\\":\\""$1"\\",\\"package\\":\\""$3"\\"},"}\\\'', stdout=subprocess.PIPE, stderr=None, shell=True)
+        packages = proc.communicate()[0]
+        packages = packages.decode("utf-8")
+        packages = packages[:-2]
+        return packages
+    
+    async def start_flatpak(self, packageAddress):
+        env = os.environ.copy()
+        env["DISPLAY"] = ':0'
+        env["MOZ_ENABLE_WAYLAND"] = 1
+        env["MOZ_USE_XINPUT2"] = 1
+
+        result = subprocess.Popen(f"flatpak run --socket=wayland {packageAddress}",
+        stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+        return result
+
+    async def stop_flatpak(self, packageAddress):
+        env = os.environ.copy()
+        env["DISPLAY"] = ':0'
+        env["MOZ_ENABLE_WAYLAND"] = 1
+        env["MOZ_USE_XINPUT2"] = 1
+
+        result = subprocess.Popen(f"flatpak kill {packageAddress}",
+        stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+        return result
+
+    async def is_flatpak_running(self, packageAddress):
+        env = os.environ.copy()
+        env["DISPLAY"] = ':0'
+
+        result = subprocess.Popen(f"flatpak ps --colums=application",
+        stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+        return result.find(packageAddress) != -1
+    
+    async def get_running_flatpak_from_list(self, flatpakString : str):
+        flatpaks = flatpakString.split(',')
+        runningFlatpaks = subprocess.Popen(f"flatpak ps --colums=application",
+        stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+
+        for flatpak in flatpaks:
+            if runningFlatpaks.find(flatpak) != -1:
+                return flatpak
+        
+        return ""
+
+
     async def sp_list_media_players(self):
         env = os.environ.copy()
         env["DBUS_SESSION_BUS_ADDRESS"] = 'unix:path=/run/user/1000/bus'
         
         result = subprocess.Popen(f"dbus-send --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames",
-        stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+        stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True, user=1000).communicate()[0]
         stripped = result.split('array [')[1].split(']')[0].replace("\n", "", 1).replace("\n", ",") \
             .replace(" ", "").replace("string", "").replace("\"", "").rstrip(',')
         services = stripped.split(',')

@@ -92,6 +92,34 @@ export function getMediaPlayerList(): Promise<any> {
   return server!.callPluginMethod("sp_list_media_players", {});
 }
 
+export function listFlatpaks(): Promise<any> {
+  return server!.callPluginMethod("get_flatpaks", {});
+}
+
+export function isFlatpakRunning(packageAddress: string): Promise<any> {
+  return server!.callPluginMethod("is_flatpak_running", {
+    packageAddress: packageAddress,
+  });
+}
+
+export function getRunningFlatpakFromList(flatpakString: string): Promise<any> {
+  return server!.callPluginMethod("get_running_flatpak_from_list", {
+    flatpakString: flatpakString,
+  });
+}
+
+export function startFlatpak(packageAddress: string): Promise<any> {
+  return server!.callPluginMethod("start_flatpak", {
+    packageAddress: packageAddress,
+  });
+}
+
+export function stopFlatpak(packageAddress: string): Promise<any> {
+  return server!.callPluginMethod("stop_flatpak", {
+    packageAddress: packageAddress,
+  });
+}
+
 export function testVolumeControl(): Promise<any> {
   return server!.callPluginMethod("sp_test_volume_control", {});
 }
