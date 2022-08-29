@@ -21,6 +21,7 @@ import * as python from ".//../python";
 import { MediaProviderButton } from "./mediaProviderButton";
 import { MusicControls } from "./musicControls";
 import { VolumeControl } from "./volumeControl";
+import { LaunchAppButton } from "./launchAppButton";
 
 export const Content: VFC = () => {
   const { state, dispatch } = useStateContext();
@@ -206,6 +207,7 @@ export const Content: VFC = () => {
       <PanelSectionRow>
         <MediaProviderButton currentProvider={state.currentServiceProvider} />
       </PanelSectionRow>
+      <LaunchAppButton />
       <InfoSection show={state.currentServiceProvider == ""} />
     </PanelSection>
   );
