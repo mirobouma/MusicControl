@@ -4,7 +4,7 @@ import { VFC } from "react";
 export const InfoPage: VFC = () => {
   return (
     <Focusable>
-      MusicControl allows you to control any media playback that is currently
+      Music Control allows you to control any media playback that is currently
       running that implements the MPRIS dbus interface. <br />
       Examples of application that are supported:
       <ul>
