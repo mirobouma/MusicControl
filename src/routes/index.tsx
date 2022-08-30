@@ -7,7 +7,7 @@ import { UsagePage } from "./pages/usage";
 export const InfoRoute: VFC = () => {
   return (
     <SidebarNavigation
-      title="MusicControl"
+      title="Music Control"
       showTitle
       pages={[
         {
