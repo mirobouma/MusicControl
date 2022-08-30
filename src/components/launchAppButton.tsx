@@ -26,7 +26,7 @@ export const LaunchAppButton: VFC = () => {
           return (
             <MenuItem
               onSelected={() => {
-                python.startFlatpak(flatpak.package);
+                python.execute(python.startFlatpak(flatpak.package));
                 setCurrentlyRunningFlatpak(flatpak);
               }}
             >
@@ -40,7 +40,7 @@ export const LaunchAppButton: VFC = () => {
 
   const handleOnClickStop = (e: MouseEvent) => {
     if (currentlyRunningFlatpak == null) return;
-    python.stopFlatpak(currentlyRunningFlatpak?.package);
+    python.execute(python.stopFlatpak(currentlyRunningFlatpak?.package));
     setCurrentlyRunningFlatpak(null);
   };
 

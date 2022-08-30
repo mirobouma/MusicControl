@@ -4,6 +4,9 @@ import subprocess
 import os
 import sys
 import shutil
+import logging
+
+logger = logging.getLogger()
 
 SP_DEST = "org.mpris.MediaPlayer2.spotify"
 
@@ -104,7 +107,7 @@ class Plugin:
     async def sp_test_volume_control(self):
         oldVolume = await self.sp_get_volume(self)
 
-        print("Volume test: " + oldVolume)
+        logger.debug("Volume test: " + oldVolume)
         sys.stdout.flush()
 
         if oldVolume == "":
@@ -164,9 +167,7 @@ class Plugin:
         baseName = os.path.basename(artUrl)
         target = os.path.join(self.cacheDir, baseName)
 
-        print("Cache-copying: " +  artUrl + " to" + target)
-        sys.stdout.flush()
-
+        logger.debug("Cache-copying: " +  artUrl + " to" + target)
         shutil.copy2(artUrl, target)
         self.previousCachedImage = target
 
@@ -179,37 +180,44 @@ class Plugin:
         packages = packages[:-2]
         return packages
     
-    async def start_flatpak(self, packageAddress):
+    async def start_music_flatpak(self, packageAddress : str):
         env = os.environ.copy()
         env["DISPLAY"] = ':0'
-        env["MOZ_ENABLE_WAYLAND"] = 1
-        env["MOZ_USE_XINPUT2"] = 1
 
-        result = subprocess.Popen(f"flatpak run --socket=wayland {packageAddress}",
-        stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
-        return result
+        try:
+            subprocess.Popen(f"xhost +local:",
+                stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            subprocess.Popen(f"xhost +si:localuser:root",
+                stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+
+            env = os.environ.copy()
+            env["DISPLAY"] = ':0'
+            
+            result = subprocess.Popen(f"flatpak run {packageAddress}", stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+            return result
+        except Exception as e:
+            logger.exception("Failed to start flatpak!")
+            return str(e)
 
     async def stop_flatpak(self, packageAddress):
-        env = os.environ.copy()
-        env["DISPLAY"] = ':0'
-        env["MOZ_ENABLE_WAYLAND"] = 1
-        env["MOZ_USE_XINPUT2"] = 1
-
         result = subprocess.Popen(f"flatpak kill {packageAddress}",
-        stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
+        stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()[0]
         return result
 
     async def is_flatpak_running(self, packageAddress):
         env = os.environ.copy()
         env["DISPLAY"] = ':0'
 
-        result = subprocess.Popen(f"flatpak ps --colums=application",
+        result = subprocess.Popen(f"flatpak ps --columns=application",
         stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
         return result.find(packageAddress) != -1
     
     async def get_running_flatpak_from_list(self, flatpakString : str):
+        env = os.environ.copy()
+        env["DISPLAY"] = ':0'
+
         flatpaks = flatpakString.split(',')
-        runningFlatpaks = subprocess.Popen(f"flatpak ps --colums=application",
+        runningFlatpaks = subprocess.Popen(f"flatpak ps --columns=application",
         stdout=subprocess.PIPE, shell=True, env=env, universal_newlines=True).communicate()[0]
 
         for flatpak in flatpaks:

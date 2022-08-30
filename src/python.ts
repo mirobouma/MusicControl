@@ -109,7 +109,7 @@ export function getRunningFlatpakFromList(flatpakString: string): Promise<any> {
 }
 
 export function startFlatpak(packageAddress: string): Promise<any> {
-  return server!.callPluginMethod("start_flatpak", {
+  return server!.callPluginMethod("start_music_flatpak", {
     packageAddress: packageAddress,
   });
 }
