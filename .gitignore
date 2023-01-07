@@ -38,7 +38,4 @@ __pycache__/
 
 /.yalc
 yalc.lock
-
 .vscode/settings.json
-package-lock.json
-pnpm-lock.yaml
