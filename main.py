@@ -27,15 +27,15 @@ class Plugin:
     def _sp_player_dbus(self, command, parameters):
       
         return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {MP_MEMB_PLAYER}.{command} \
-            {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0]
+            {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0]
 
     def _sp_dbus(self, command, parameters):
         return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {MP_MEMB}.{command} \
-            {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0]
+            {parameters} > /dev/null", stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0]
 
     def _sp_dbus_set(self, command, parameters):
         return subprocess.Popen(f"dbus-send --print-reply --dest={self.player} {MP_PATH} {PROP_SET_PATH} string:\"{MP_MEMB_PLAYER}\" \
-            string:\"{command}\" {parameters} ", stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0]
+            string:\"{command}\" {parameters} ", stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0]
 
     async def _sp_open(self, uri):
         return self._sp_player_dbus(self, "OpenUri", f"string:{uri}")
@@ -66,7 +66,7 @@ class Plugin:
             string:\"{MP_MEMB_PLAYER}\" string:'PlaybackStatus' \
             | tail -1 \
             | cut -d \"\\\"\" -f2 | tr -d \"\n\"" \
-            ,stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0]
+            ,stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0]
         return result
 
     async def sp_track_progress(self):
@@ -74,7 +74,7 @@ class Plugin:
             string:\"{MP_MEMB_PLAYER}\" string:'Position' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
-            , stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0]
+            , stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0]
         return result
 
     async def sp_get_volume(self):
@@ -82,7 +82,7 @@ class Plugin:
             string:\"{MP_MEMB_PLAYER}\" string:'Volume' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
-            , stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0]
+            , stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0]
         return result
 
     async def sp_can_seek(self):
@@ -90,7 +90,7 @@ class Plugin:
             string:\"{MP_MEMB_PLAYER}\" string:'CanSeek' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev | tr -d \"\n\"" \
-            , stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0]
+            , stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0]
         return result
 
     async def sp_test_volume_control(self):
@@ -116,7 +116,7 @@ class Plugin:
             string:\"{MP_MEMB}\" string:'Identity' \
             | tail -1 \
             | rev | cut -d' ' -f 1 | rev" \
-            , stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0].replace("\"", "").replace("\n", "")
+            , stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0].replace("\"", "").replace("\n", "")
         return result
 
     async def get_meta_data(self):
@@ -133,7 +133,7 @@ class Plugin:
                 | sed -E 's/\"$//'                              `# ...and trailing quotes.`  \
                 | sed -E 's/\"+/|/'                             `# Regard "" as seperator.`  \
                 | sed -E 's/ +/ /g'                            `# Merge consecutive spaces.`",  
-                stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0]
+                stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0]
         except:
             result = "Unavailable"
         return result
@@ -152,7 +152,7 @@ class Plugin:
         baseName = os.path.basename(artUrl)
         target = os.path.join(self.cacheDir, baseName)
 
-        print("Cache-copying: " +  artUrl + " to" + target)
+        print("[MusicControl] Cache-copying: " +  artUrl + " to" + target)
         sys.stdout.flush()
 
         shutil.copy2(artUrl, target)
@@ -162,7 +162,7 @@ class Plugin:
 
     async def sp_list_media_players(self):
         result = subprocess.Popen(f"dbus-send --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames",
-        stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(), universal_newlines=True).communicate()[0]
+        stdout=subprocess.PIPE, shell=True, env=self._get_dbus_env(self), universal_newlines=True).communicate()[0]
         stripped = result.split('array [')[1].split(']')[0].replace("\n", "", 1).replace("\n", ",") \
             .replace(" ", "").replace("string", "").replace("\"", "").rstrip(',')
         services = stripped.split(',')
@@ -187,16 +187,21 @@ class Plugin:
         return self.player
 
     async def _main(self):
+        print(f"[MusicControl] UID: {os.getuid()}")
+        sys.stdout.flush()
         self.cacheDir = "/home/deck/.deckycache/MusicControl"
         self.symLinkPath = "/home/deck/.local/share/Steam/steamui/images/deckycache_musicControl"
 
         self.previousCachedImage = ""
         self.player = SP_DEST
 
-        if os.path.isdir(self.cacheDir):
-            shutil.rmtree(self.cacheDir)
+        try:
+            if os.path.exists(self.cacheDir):
+                shutil.rmtree(self.cacheDir)
+        except:
+            print(f"[MusicControl] Failed to clear cache folder")
 
-        if not os.path.isdir(self.cacheDir):
+        if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
         
         if (not os.path.exists(self.symLinkPath)):
