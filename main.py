@@ -5,6 +5,8 @@ import os
 import sys
 import shutil
 
+import decky_plugin
+
 SP_DEST = "org.mpris.MediaPlayer2.spotify"
 
 MP_PATH = "/org/mpris/MediaPlayer2"
@@ -189,8 +191,8 @@ class Plugin:
     async def _main(self):
         print(f"[MusicControl] UID: {os.getuid()}")
         sys.stdout.flush()
-        self.cacheDir = "/home/deck/.deckycache/MusicControl"
-        self.symLinkPath = "/home/deck/.local/share/Steam/steamui/images/deckycache_musicControl"
+        self.cacheDir = os.path.join(decky_plugin.DECKY_PLUGIN_RUNTIME_DIR, "cache")
+        self.symLinkPath = os.path.join(decky_plugin.DECKY_USER_HOME, ".local/share/Steam/steamui/images/deckycache_musicControl")
 
         self.previousCachedImage = ""
         self.player = SP_DEST
