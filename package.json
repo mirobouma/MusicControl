@@ -1,6 +1,6 @@
 {
   "name": "music-control",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Music control plugin that can control any MPRIS implementation.",
   "scripts": {
     "build": "shx rm -rf dist && rollup -c",
