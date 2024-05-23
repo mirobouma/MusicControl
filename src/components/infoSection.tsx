@@ -8,7 +8,7 @@ export const InfoSection: VFC = () => {
   };
 
   return (
-    <ButtonItem layout="below" bottomSeparator={false} onClick={onClickInfo}>
+    <ButtonItem layout="below" bottomSeparator='none' onClick={onClickInfo}>
       Info
     </ButtonItem>
   );
