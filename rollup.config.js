@@ -23,12 +23,13 @@ export default defineConfig({
     }),
   ],
   context: "window",
-  external: ["react", "react-dom"],
+  external: ["react", "react-dom", "decky-fontend-lib"],
   output: {
     file: "dist/index.js",
     globals: {
       react: "SP_REACT",
       "react-dom": "SP_REACTDOM",
+	  "decky-fontend-lib": "DFL",
     },
     format: "iife",
     exports: "default",
